@@ -3,6 +3,9 @@
 
 #include "SlotMachine.h"
 
+#include "BlendSpaceAnalysis.h"
+#include "Algo/RandomShuffle.h"
+
 // Sets default values
 ASlotMachine::ASlotMachine()
 {
@@ -17,6 +20,9 @@ ASlotMachine::ASlotMachine()
 
 	LeverComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Lever"));
 	LeverComponent->SetupAttachment(Root);
+
+	PivotLeverMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PivotLeverMesh"));
+	PivotLeverMesh->SetupAttachment(LeverComponent);
 
 	ReelLeftMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ReelLeftMesh"));
 	ReelLeftMesh->SetupAttachment(ReelsComponent);
@@ -53,5 +59,41 @@ void ASlotMachine::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, c
 	bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
 {
 	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	if(LeverAngle == 0)
+	{
+		LeverAngle = -45.0f;
+	
+		FRotator NewRotation(LeverAngle, 0.0f, 90.0f);
+
+		PivotLeverMesh->SetRelativeRotation(NewRotation);
+
+		Spin(ReelLeftMesh);
+		TriggerDelay(2.0f);
+		Spin(ReelMidMesh);
+		TriggerDelay(2.0f);
+		Spin(ReelRightMesh);
+	}
+}
+
+void ASlotMachine::Spin(UStaticMeshComponent* Reels)
+{
+	int32 Random = FMath::RandRange(0,15);
+
+	float FixedValue = 22.5f;
+
+	int Result = Random * FixedValue;
+
+	FRotator NewRotation;
+	NewRotation.Pitch = Result;
+	NewRotation.Yaw = 0.0f;
+	NewRotation.Roll = 90.0f;
+
+	Reels->SetRelativeRotation(NewRotation);
+}
+
+void ASlotMachine::TriggerDelay(float DelayTime)
+{
+	GetWorldTimerManager().SetTimer(TimerHandle,[this](){},DelayTime,false);
 }
 
