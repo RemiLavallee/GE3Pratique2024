@@ -25,9 +25,24 @@ public:
 
 	virtual void NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
 
-	virtual void Spin(UStaticMeshComponent* component);
+	virtual void Spin(UStaticMeshComponent* component, float& ReelAngle);
 
-	virtual void TriggerDelay(float delayTime);
+	virtual void TriggerDelay(float delayTime, TFunction<void()> Callback, FTimerHandle& TimerHandle);
+
+	virtual void SpinReelsWithDelay();
+
+	virtual void CheckConditionToWin();
+
+	virtual void SetWinMaterial();
+
+	virtual void SetDefaultMaterial();
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+	UMaterialInterface* WinMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+	UMaterialInterface* DefaultMaterial;
+	
 private:
 
 	UPROPERTY(VisibleAnywhere)
@@ -58,6 +73,11 @@ private:
 	UStaticMeshComponent* WinButtonMesh;
 
 	float LeverAngle;
+	float ReelLeftAngle;
+	float ReelMidAngle;
+	float ReelRightAngle;
 
-	FTimerHandle TimerHandle;
+	FTimerHandle ReelLeftHandle;
+	FTimerHandle ReelRightHandle;
+	FTimerHandle ReelMidHandle;
 };

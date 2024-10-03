@@ -4,7 +4,9 @@
 #include "SlotMachine.h"
 
 #include "BlendSpaceAnalysis.h"
+#include "IntVectorTypes.h"
 #include "Algo/RandomShuffle.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ASlotMachine::ASlotMachine()
@@ -52,7 +54,17 @@ void ASlotMachine::BeginPlay()
 void ASlotMachine::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	LeverAngle += DeltaTime * 50.0f;
 
+	LeverAngle = FMath::Min(LeverAngle, 0.0f);
+
+	FRotator NewRotation;
+	NewRotation.Yaw = 0.0f;
+	NewRotation.Pitch = LeverAngle;
+	NewRotation.Roll = 90.0f;
+
+	PivotLeverMesh->SetRelativeRotation(NewRotation);
 }
 
 void ASlotMachine::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, class UPrimitiveComponent* OtherComp,
@@ -68,21 +80,19 @@ void ASlotMachine::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Other, c
 
 		PivotLeverMesh->SetRelativeRotation(NewRotation);
 
-		Spin(ReelLeftMesh);
-		TriggerDelay(2.0f);
-		Spin(ReelMidMesh);
-		TriggerDelay(2.0f);
-		Spin(ReelRightMesh);
+		SpinReelsWithDelay();
 	}
 }
 
-void ASlotMachine::Spin(UStaticMeshComponent* Reels)
+void ASlotMachine::Spin(UStaticMeshComponent* Reels, float& ReelAngle)
 {
 	int32 Random = FMath::RandRange(0,15);
 
 	float FixedValue = 22.5f;
 
 	int Result = Random * FixedValue;
+
+	ReelAngle = Result;
 
 	FRotator NewRotation;
 	NewRotation.Pitch = Result;
@@ -92,8 +102,45 @@ void ASlotMachine::Spin(UStaticMeshComponent* Reels)
 	Reels->SetRelativeRotation(NewRotation);
 }
 
-void ASlotMachine::TriggerDelay(float DelayTime)
+void ASlotMachine::TriggerDelay(float DelayTime, TFunction<void()> Callback, FTimerHandle& TimerHandle)
 {
-	GetWorldTimerManager().SetTimer(TimerHandle,[this](){},DelayTime,false);
+	GetWorldTimerManager().SetTimer(TimerHandle, [Callback]()
+	{
+		if(Callback)
+		{
+			Callback();
+		}
+	}, DelayTime, false);
+}
+
+void ASlotMachine::SpinReelsWithDelay()
+{
+	Spin(ReelLeftMesh, ReelLeftAngle);
+
+	TriggerDelay(1.0f,[this]() { Spin(ReelMidMesh, ReelMidAngle); }, ReelMidHandle);
+
+	TriggerDelay(2.0f,[this]() { Spin(ReelRightMesh, ReelRightAngle); CheckConditionToWin(); }, ReelRightHandle);
+}
+
+void ASlotMachine::CheckConditionToWin()
+{
+	if(ReelLeftHandle == ReelMidHandle || ReelLeftAngle == ReelRightAngle || ReelMidAngle == ReelRightAngle || ReelMidAngle == ReelLeftAngle)
+	{
+		SetWinMaterial();
+	}
+	else
+	{
+		SetDefaultMaterial();
+	}
+}
+
+void ASlotMachine::SetWinMaterial()
+{
+	WinButtonMesh->SetMaterial(0, WinMaterial);
+}
+
+void ASlotMachine::SetDefaultMaterial()
+{
+	WinButtonMesh->SetMaterial(0, DefaultMaterial);
 }
 
