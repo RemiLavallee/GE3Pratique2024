@@ -41,6 +41,10 @@ ASlotMachine::ASlotMachine()
 	WinButtonMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WinButtonMesh"));
 	WinButtonMesh->SetupAttachment(BoxMesh);
 
+	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComponent"));
+	NiagaraComponent->SetupAttachment(Root);
+
+	NiagaraComponent->SetAutoActivate(true);
 }
 
 // Called when the game starts or when spawned
@@ -127,6 +131,7 @@ void ASlotMachine::CheckConditionToWin()
 	if(ReelLeftHandle == ReelMidHandle || ReelLeftAngle == ReelRightAngle || ReelMidAngle == ReelRightAngle || ReelMidAngle == ReelLeftAngle)
 	{
 		SetWinMaterial();
+		TriggerNiagaraEffect();
 	}
 	else
 	{
@@ -142,5 +147,11 @@ void ASlotMachine::SetWinMaterial()
 void ASlotMachine::SetDefaultMaterial()
 {
 	WinButtonMesh->SetMaterial(0, DefaultMaterial);
+}
+
+void ASlotMachine::TriggerNiagaraEffect()
+{
+	NiagaraComponent->SetAsset(NiagaraSystemAsset);
+	NiagaraComponent->Activate(true);
 }
 
