@@ -44,7 +44,7 @@ ASlotMachine::ASlotMachine()
 	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("NiagaraComponent"));
 	NiagaraComponent->SetupAttachment(Root);
 
-	NiagaraComponent->SetAutoActivate(true);
+	NiagaraComponent->SetAutoActivate(false);
 }
 
 // Called when the game starts or when spawned
